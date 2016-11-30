@@ -76,12 +76,12 @@ ln -sf ../usr/share/zoneinfo/$TIMEZONE /etc/localtime
 
 ################################## run other scripts in turn ##############
 
-for x in $INSTDIR/setup.d/*; do
-	case $(basename $x) in
+for script in $INSTDIR/setup.d/*; do
+	case $(basename $script) in
 		[0-9][0-9]_*)
-		echo "--------------------- start script $x ---------------------"
-		. $x
-		echo "--------------------- end of script $x ---------------------"
+		echo "--------------------- start script $script ---------------------"
+		. $script
+		echo "--------------------- end of script $script ---------------------"
 		;;
 	*)
 		;;

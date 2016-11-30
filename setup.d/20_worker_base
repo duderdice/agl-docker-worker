@@ -6,8 +6,6 @@ apt-get install -y gawk wget git git-core diffstat unzip texinfo gcc-multilib bu
 # add some cool base tools
 apt-get install -y vim-gtk man tree xz-utils tar 
 
-false # TODO - break here
-
 # for gerrit 
 apt-get install -y git-review gitg
 

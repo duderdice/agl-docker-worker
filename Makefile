@@ -79,7 +79,6 @@ build:
 test:
 	docker run \
 		--detach=true \
-		--net=none \
 		--hostname=$(CNAME) \
 		--name=$(CNAME) \
 		--privileged \

@@ -3,7 +3,7 @@
 apt-get install -y python-lzma python-gpgme pbzip2 pigz lzop
 
 dpkg -i	\
-	$INSTDIR/bmap-tools/bmap-tools*.deb
+	$INSTDIR/tools/bmaptools/bmap-tools*.deb
 
 mkdir -p /usr/local/bin
 for x in $INSTDIR/tools/scripts/*; do
