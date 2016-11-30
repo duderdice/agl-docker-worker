@@ -1,0 +1,16 @@
+#!/bin/bash 
+
+. /etc/xdtrc
+
+MACHINE=${1:-porter}
+IMAGE=${2:-${XDT_BUILD}/tmp/deploy/images/${MACHINE}/agl-demo-platform-crosssdk-${MACHINE}.ext4}
+
+echo "Using MACHINE=$MACHINE IMAGE=$IMAGE"
+
+[[ ! -f $IMAGE ]] && { echo "Invalid image $IMAGE"; exit 1; }
+
+REALIMG=$(realpath $IMAGE)
+[[ ! -f ${REALIMG}.bak ]] && cp -v ${REALIMG} ${REALIMG}.bak
+
+sudo systemctl restart tftpd-hpa
+sudo xnbd-server --target --lport 10809 $IMAGE

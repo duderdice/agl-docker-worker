@@ -1,0 +1,65 @@
+#!/bin/bash
+
+# install prereqs for bitbake plus other pkgs
+apt-get install -y gawk wget git git-core diffstat unzip texinfo gcc-multilib build-essential chrpath socat libsdl1.2-dev cpio libzip2 lsb-release python3 
+ 
+# add some cool base tools
+apt-get install -y vim-gtk man tree xz-utils tar 
+
+false # TODO - break here
+
+# for gerrit 
+apt-get install -y git-review gitg
+
+# screen, xterm for bitbake devshell
+# libncurses5-dev for kernel 'make menuconfig'
+apt-get install -y ccache curl screen xterm libncurses5-dev
+
+# for toaster
+apt-get install -y python-pip
+pip install "Django==1.6" "South==0.8.4" "argparse==1.2.1" "wsgiref==0.1.2" "beautifulsoup4>=4.4.0"
+
+# for network boot through tftp+nbd
+apt-get install -y tftpd-hpa xnbd-server
+# adjust config file to have the server point to bitbake images deployment dir
+sed -i -e "s#^\(TFTP_DIRECTORY=\).*\$#\1\"$XDT_BUILD/tmp/deploy/images\"#" /etc/default/tftpd-hpa
+
+# update xterm resources to have truetype fonts and utf-8
+cat <<EOF >>/etc/X11/app-defaults/XTerm
+
+!iotbzh: enable truetype fonts and UTF-8 encoding
+*VT100*faceName: mono
+*VT100*faceSize: 13
+*VT100*locale: true
+EOF
+
+# add the build user
+useradd -c "Builder" -d $DEVUSER_HOME -G sudo -m -U -s /bin/bash -u $DEVUSER_UID $DEVUSER
+echo $DEVUSER:$DEVUSER_PASSWORD | chpasswd 
+
+# generate an extra environment file sourced by bashrc
+for k in	DEVUSER DEVUSER_UID DEVUSER_HOME \
+			XDT_DIR \
+			XDT_META XDT_DOWNLOADCACHE XDT_SSTATECACHE XDT_CCACHE XDT_BUILD XDT_WORKSPACE XDT_SOURCES XDT_SDK \
+			; do
+	v=${!k} # get value
+	[[ "${v:0:1}" == "/" ]] && mkdir -p $v # create dir only if value starts with "/"
+	echo "export $k=$v" >>/etc/xdtrc
+done
+
+mkdir -p $DEVUSER_HOME/bin
+cat <<'EOF' >>$DEVUSER_HOME/.bashrc
+
+# added by worker image creation script (docker-image-builder)
+export PATH=~/bin:$PATH
+[[ -f /etc/xdtrc ]] && . /etc/xdtrc
+
+EOF
+
+# copy meta init script in ~devel/bin:
+wget -O $DEVUSER_HOME/bin/prepare_meta https://raw.githubusercontent.com/iotbzh/agl-manifest/master/prepare_meta
+chmod +x $DEVUSER_HOME/bin/*
+
+chown -R $DEVUSER:$DEVUSER $XDT_DIR
+chown -R $DEVUSER:$DEVUSER $DEVUSER_HOME
+

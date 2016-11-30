@@ -1,0 +1,46 @@
+#!/bin/bash
+
+INSTALLER=$1
+[[ -f $INSTALLER ]] || { echo "Usage: $(basename $0) <sdk_installer>" >&2; exit 1; }
+
+. /etc/xdtrc
+
+# run the snapshot build procedure 
+rm -rf $XDT_SDK &>/dev/null || { echo "$XDT_SDK already exists but can't be removed. Using sudo..."; sudo rm -rf $XDT_SDK || exit 1 ; }
+mkdir -p $XDT_SDK 2>/dev/null || { echo "Giving rights on /xdt to $USER"; sudo chown -R $DEVUSER:$DEVUSER $XDT_DIR; mkdir -p $XDT_SDK; }
+$INSTALLER -y -d $XDT_SDK
+
+#### create a link at SDK default location
+# extract script part of installer
+offset=$(grep -na -m1 "^MARKER:$" $INSTALLER | cut -d':' -f1)
+eval $(head -n $offset $INSTALLER | grep ^DEFAULT_INSTALL_DIR= )
+
+PARENT_INSTALL_DIR=$(dirname $DEFAULT_INSTALL_DIR)
+
+mkdir -p $PARENT_INSTALL_DIR 2>/dev/null || sudo mkdir -p $PARENT_INSTALL_DIR
+ln -sf $XDT_SDK $DEFAULT_INSTALL_DIR 2>/dev/null || sudo ln -sf $XDT_SDK $DEFAULT_INSTALL_DIR
+
+
+# remove proprietary files installed in /usr/local/ (arm sysroot)
+rm -rfv $XDT_SDK/sysroots/cortex*/usr/local
+
+# cleanup
+pushd $XDT_SDK/sysroots/*-poky-*
+
+	find . -type d -name "*.debug" | while read dir; do
+		echo "Removing debug dir: $dir"
+		rm -rf $dir
+	done
+
+	echo "Removing sources in /usr/src"
+	rm -rf usr/src
+
+	for dir in bin sbin usr/bin usr/local/bin usr/sbin; do
+		echo "Removing binaries in $dir"
+		find $dir -type f -exec file -i '{}' \; | grep 'x-executable;' | grep 'charset=binary' | cut -f1 -d':' | while read file; do
+			rm -fv $file
+		done
+	done
+
+popd
+

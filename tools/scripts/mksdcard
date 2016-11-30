@@ -1,0 +1,126 @@
+#!/bin/bash
+
+# Copyright (C) 2015 "IoT.bzh"
+# Authors: Jose Bollo, Stephane Desneux, Yannick Gicquel
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set -e
+
+usage() {
+	echo "Usage: $0 <image .rootfs.tar.bz2> <output image file or dir> [size in GB]" >&2
+	echo "<image tarball> is usually located in \$builddir/tmp/deploy/images" >&2
+	exit 1
+}
+
+IMGTAR=$1
+[[ ! -f $IMGTAR ]] && { echo "Invalid image archive" >&2; usage; }
+
+OUTPUT=$2
+
+if [[ -z $OUTPUT ]]; then
+	echo "Invalid output file/dir." >&2
+	usage
+elif [[ -d $OUTPUT ]]; then
+	# output is a dir, use input file for name
+	OUTPUT=$OUTPUT/$(basename $IMGTAR .rootfs.tar.bz2).raw
+fi
+
+
+SIZE=${3:-2} # size in giga
+
+initdisk() {
+  local size=$1 file=$2 ; #size is in giga
+  {
+    head -c 446 /dev/zero
+    printf '\x00\x00\x00\x00\x83\x00\x00\x00\x01\x00\x00\x00'
+    printf $(printf %08x $(( ( (size * 1073741824) - 1) / 512 )) | 
+       sed 's:\(..\)\(..\)\(..\)\(..\):\\x\4\\x\3\\x\2\\x\1:')
+    head -c 48 /dev/zero
+    printf '\x55\xAA'
+  } > $file
+  dd if=/dev/zero of=$file bs=1 count=0 seek=${size}G
+}
+
+make_image() {
+  local imgtar=$1
+  local ydir=$(dirname $imgtar)
+  local image=$2
+  local size=$3
+  local tmpd=/tmp/dir$$
+  echo
+  echo
+  echo "Creating the image $image ..."
+  [[ -f $image ]] && rm $image
+  [[ -f $image.tar.xz ]] && rm $image.tar.xz
+  initdisk $size $image
+  [[ ! -e /dev/loop-control ]] && sudo mknod /dev/loop-control c 10 237
+  for i in $(seq 0 9); do
+	[[ ! -b /dev/loop$i ]] && sudo mknod /dev/loop$i b 7 $i
+  done
+  local loop=$(sudo losetup -f)
+  sudo losetup -o 512 $loop $image
+  sudo mke2fs -t ext3 $loop
+  sudo mkdir $tmpd
+  sudo mount $loop $tmpd
+  echo "Extracting image tarball..."
+  sudo tar-1.28 pjxf $imgtar -C $tmpd --xattrs-include='*' 
+  sudo cp $ydir/uImage+dtb $tmpd/boot
+  sudo umount $loop
+  sudo losetup -d $loop
+  sudo rmdir $tmpd
+
+  if which bmaptool &>/dev/null; then
+	  echo "Creating bitmap file..."
+	  bmaptool create -o $image.bmap $image
+  fi
+
+#  echo "Creating compressed image $image.bz2 ..."
+#  BZIP2=$(which pbzip2 2>/dev/null || which bzip2 2>/dev/null)
+#  $BZIP2 -f -c $image >$image.bz2
+
+  echo "Creating compressed image $image.xz..."
+  xz -0 -T 0 -f -c $image >$image.xz
+
+  rm $image
+
+  echo "done"
+  echo
+  echo 
+  echo 
+  echo 
+  echo 
+  echo "Image $image created!"
+  echo 
+  echo "On Porter board, this image can be booted with the following uboot environment:"
+
+  cat <<'EOF'
+---
+setenv bootargs_console 'console=ttySC6,38400 ignore_loglevel'
+setenv bootargs_video   'vmalloc=384M video=HDMI-A-1:1920x1080-32@60'
+setenv bootargs_root    'root=/dev/mmcblk0p1 rootdelay=3 rw rootfstype=ext3 rootwait'
+setenv bootmmc          '1:1'
+setenv bootcmd_sd       'ext4load mmc ${bootmmc} 0x40007fc0 boot/uImage+dtb'
+setenv bootcmd 'setenv bootargs ${bootargs_console} ${bootargs_video} ${bootargs_root}; run bootcmd_sd; bootm 0x40007fc0'
+saveenv
+---
+EOF
+
+  echo
+  echo "NB: replace bootmmc value '1:1' with '0:1' or '2:1' to access the good slot"
+  echo "    use 'ext4ls mmc XXX:1' to test access"
+}
+
+make_image $IMGTAR $OUTPUT $SIZE
+
