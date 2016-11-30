@@ -35,7 +35,7 @@ The Dockerfile is generic: it simply inherits from a Debian image.
 When running a 'docker build':
 
 * Docker instantiates a new container based on the latest Debian image
-* Docker copies the current directory inside the container in /root/INSTALL
+* Docker copies the INSTALL folder inside the container in /root/INSTALL
 * then it runs the setup script /root/INSTALL/docker/setup_image.sh
 
 In turn, this setup script will:

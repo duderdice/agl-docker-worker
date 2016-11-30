@@ -21,26 +21,26 @@ function debug() {
 trap debug ERR # on error, run a sleep tp debug container
 
 # get the INSTALL dir (the one where we were launched)
-INSTDIR=$(cd $(dirname $0)/.. && pwd -P)
+INSTDIR=$(cd $(dirname $0) && pwd -P)
 echo "Detected container install dir = $INSTDIR"
 
 ################################## variables #################################
 
 # source variables in conf file
-. $INSTDIR/docker/image.conf
+. $INSTDIR/image.conf
 
 ################################## install docker endpoint #####################
 
 # install the entrypoint script in /usr/bin
-install --mode=755 $INSTDIR/docker/wait_for_net.sh /usr/bin/
+install --mode=755 $INSTDIR/wait_for_net.sh /usr/bin/
 
 ################################## install first-run service ###################
 # all operations requiring runnning daemons (inc. systemd) must be run at first
 # container instanciation
 
 if [[ "$FIRSTRUN" == "yes" ]]; then
-	install --mode=755 $INSTDIR/docker/firstrun.sh      /root/firstrun.sh
-	install --mode=644 $INSTDIR/docker/image.conf       /root/firstrun.conf
+	install --mode=755 $INSTDIR/firstrun.sh      /root/firstrun.sh
+	install --mode=644 $INSTDIR/image.conf       /root/firstrun.conf
 	[[ -d $INSTDIR/firstrun.d ]] && cp -a $INSTDIR/firstrun.d /root/
 	mkdir -p /etc/systemd/system/multi-user.target.wants/
 	cat <<EOF >/etc/systemd/system/multi-user.target.wants/firstrun.service
