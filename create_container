@@ -1,0 +1,59 @@
+#!/bin/bash
+
+CURDIR=$(cd $(dirname $0) && pwd -P)
+DEFIMAGE=$(make -s -C $CURDIR show-image)
+
+function usage() {
+	echo "Usage: $(basename $0) <instance ID> [image name]"  >&2
+	echo "Instance ID must be 0 or a positive integer (1,2,...)" >&2
+	echo "Image name is optional: 'make show-image' is used by default to get image" >&2
+	echo "Default image: $DEFIMAGE" >&2
+	exit 1
+}
+
+case $1 in 
+	-h|--help|"")
+		usage
+		;;
+esac
+
+CURDIR=$(cd $(dirname $0) && pwd -P)
+
+ID=$1
+IMAGE=${2:-$DEFIMAGE}
+
+USER=$(id -un)
+echo "Using instance ID #$ID (user $(id -un))"
+
+NAME=agl-worker-$(hostname|cut -f1 -d'.')-$ID-$USER
+
+MIRRORDIR=$HOME/ssd/localmirror_$ID
+XDTDIR=$HOME/ssd/xdt_$ID
+SHAREDDIR=$HOME/devel/docker/share
+
+SSH_PORT=$((2222 + ID))
+WWW_PORT=$((8000 + ID))
+BOOT_PORT=$((69 + ID))
+NBD_PORT=$((10809 + ID))
+
+mkdir -p $MIRRORDIR $XDTDIR $SHAREDDIR
+docker run \
+	--publish=${SSH_PORT}:22 \
+	--publish=${WWW_PORT}:8000 \
+	--publish=${BOOT_PORT}:69/udp \
+	--publish=${NBD_PORT}:10809 \
+	--detach=true \
+	--hostname=$NAME --name=$NAME \
+	--privileged -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
+	-v $MIRRORDIR:/home/devel/mirror \
+	-v $SHAREDDIR:/home/devel/share \
+	-v $XDTDIR:/xdt \
+	-it docker.automotivelinux.org/agl/worker:2.1
+
+echo "Copying your identity to container $NAME:"
+sleep 5
+ssh-copy-id -p $SSH_PORT devel@$(hostname)
+
+echo "You can now login using:"
+echo "   ssh -p $SSH_PORT devel@$(hostname)"
+

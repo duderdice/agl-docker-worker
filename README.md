@@ -46,3 +46,29 @@ In turn, this setup script will:
 When the setup script finishes, Docker commits the temporary container in a new image.
 
 This image can then be exported to a tarball and/or pushed to a Docker registry.
+
+## Using the generated image
+
+### Grab the image
+
+To publish the image, there are 2 ways: using a docker registry OR exporting to a tarball.
+
+In the first case, using the image is very easy as it can be pulled directly from the registry host using a 'docker pull' command. The main issue with this method is the efficiency: images are not compressed and it takes ages to transfer overlays to the client host.
+
+In the second case, the efficiency is better but requires to transfer the image archive manually. On the client host, loading the image is as simple as:
+
+```
+# wget -O - <archive_url> | docker load
+```
+
+### Instantiate a container
+
+The following command can be used as an example to instantiate a container:
+
+
+```
+# ./create_container 0
+```
+
+To instantiate more containers on the same host, the instance ID passed as argument must be different from the previous ones.
+

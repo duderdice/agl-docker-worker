@@ -4,7 +4,7 @@
 REGISTRY=docker.automotivelinux.org
 REPO=agl
 NAME=worker
-VERSION=2.1
+VERSION=$(shell tail -1 VERSION)
 
 # ---------------------------------------------------
 # --- computed - don't touch !
@@ -24,6 +24,7 @@ help:
 	@echo "- push-latest: push the image to registry $(REGISTRY) and also tag as 'latest'"
 	@echo "- export: export the image to a compressed archive"
 	@echo "- export-latest: export the latest image to a compressed archive"
+	@echo "- show-image: dumps the current image name"
 	@echo ""
 	@echo "Variables:"
 	@echo "- Docker registry:           REGISTRY=$(REGISTRY)"
@@ -58,13 +59,7 @@ clean:
 # remove spurious containers and images left by broken builds
 .PHONY:distclean
 distclean: clean
-	@for imgid in $$(docker images | grep "^<none>" | awk '{print $$3}'); do \
-		for cntid in $$(docker ps -a -f ancestor=$$imgid --format "{{.ID}}"); do \
-			echo "Stop container $$cntid"; \
-			docker stop $$cntid; \
-			echo "Remove container $$cntid"; \
-			docker rm $$cntid; \
-		done; \
+	for imgid in $$(docker images | grep "^<none>" | awk '{print $$3}'); do \
 		echo "Remove image $$imgid"; \
 		docker rmi $$imgid; \
 	done
@@ -102,4 +97,8 @@ push-latest: push
 export:
 	@echo "Export image to docker_$(REPO)_$(NAME)-$(VERSION).tar.xz"
 	docker save $(IMAGE_NAME) | xz -T0 -c >docker_$(REPO)_$(NAME)-$(VERSION).tar.xz
+
+.PHONY:show-image
+show-image:
+	@echo $(IMAGE_NAME)
 

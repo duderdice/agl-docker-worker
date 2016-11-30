@@ -4,6 +4,9 @@
 echo "deb http://http.debian.net/debian jessie-backports main contrib" >>/etc/apt/sources.list
 echo "deb http://http.debian.net/debian testing main contrib" >>/etc/apt/sources.list
 
+# setup network retries for apt
+echo "Acquire::Retries 5;" >/etc/apt/apt.conf.d/99NetRetries
+
 # upgrade distro
 apt-get update -y
 apt-get dist-upgrade -y
