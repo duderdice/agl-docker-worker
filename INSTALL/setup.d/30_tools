@@ -10,3 +10,6 @@ for x in $INSTDIR/tools/scripts/*; do
 	install --mode=755 $x /usr/local/bin/
 done
 
+# grab and install repo tool
+wget -O /usr/local/bin/repo https://storage.googleapis.com/git-repo-downloads/repo
+chmod a+x /usr/local/bin/repo
