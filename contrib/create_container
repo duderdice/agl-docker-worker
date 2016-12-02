@@ -43,9 +43,9 @@ echo "Using instance ID #$ID (user $(id -un))"
 
 NAME=agl-worker-$(hostname|cut -f1 -d'.')-$ID-$USER
 
-MIRRORDIR=$HOME/ssd/localmirror_$ID
-XDTDIR=$HOME/ssd/xdt_$ID
-SHAREDDIR=$HOME/devel/docker/share
+MIRRORDIR=$HOME/Workspace/agl-docker/mirror_$ID
+XDTDIR=$HOME/Workspace/agl-docker/xdt_$ID
+SHAREDDIR=$HOME/Workspace/agl-docker/share
 
 SSH_PORT=$((2222 + ID))
 WWW_PORT=$((8000 + ID))
@@ -69,6 +69,12 @@ docker run \
 echo "Copying your identity to container $NAME:"
 sleep 5
 ssh-copy-id -p $SSH_PORT devel@$(hostname)
+
+echo "Activate vim environment:"
+ssh -p $SSH_PORT devel@$(hostname) "git clone https://github.com/claneys/vimrc.git .vim; ln -s .vim/vimrc .vimrc; vim +PlugInstall +qall; cd ~/.vim/plugged/vimproc.vim && make"
+
+echo "Customizing your bash environment:"
+scp -P $SSH_PORT ./bashrc_worker devel@$(hostname):~/.bashrc
 
 echo "You can now login using:"
 echo "   ssh -p $SSH_PORT devel@$(hostname)"
