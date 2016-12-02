@@ -76,6 +76,9 @@ ssh -p $SSH_PORT devel@$(hostname) "git clone https://github.com/claneys/vimrc.g
 echo "Customizing your bash environment:"
 scp -P $SSH_PORT ./bashrc_worker devel@$(hostname):~/.bashrc
 
+echo "Setup git environment:"
+scp -rP 2222 ~/.git_template ~/.gitconfig devel@$(hostname):~
+
 echo "You can now login using:"
 echo "   ssh -p $SSH_PORT devel@$(hostname)"
 
