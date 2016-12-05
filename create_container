@@ -48,7 +48,7 @@ docker run \
 	-v $MIRRORDIR:/home/devel/mirror \
 	-v $SHAREDDIR:/home/devel/share \
 	-v $XDTDIR:/xdt \
-	-it docker.automotivelinux.org/agl/worker:2.1
+	-it $IMAGE
 
 echo "Copying your identity to container $NAME:"
 sleep 5
