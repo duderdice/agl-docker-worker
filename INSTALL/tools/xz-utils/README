@@ -1,0 +1,21 @@
+# create a build dir
+mkdir build
+
+# clone from git://git.breakpoint.cc/bigeasy/xz-utils-debian.git
+git clone git://git.breakpoint.cc/bigeasy/xz-utils-debian.git
+cd xz-utils-debian
+
+# install needed package for compiling: apt-get install autoconf automake ...
+sudo apt-get update
+sudo apt-get install debhelper autoconf libtool doxygen
+
+# adjust debian/rules: remove --disable-threads from configure args
+sed -i -e 's/--disable-threads/--enable-threads/g' -e 's/--enable-small/--disable-small/g' debian/rules
+
+# build package
+dpkg-buildpackage -uc -us -b
+
+# grab deb files
+cd ..
+ls -l *.deb
+
