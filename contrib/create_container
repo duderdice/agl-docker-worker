@@ -74,9 +74,6 @@ scp -P $SSH_PORT ~/.ssh/id_rsa* devel@$(hostname):~/.ssh
 echo "Activate vim environment:"
 ssh -p $SSH_PORT devel@$(hostname) "git clone https://github.com/claneys/vimrc.git .vim; ln -s .vim/vimrc .vimrc; vim +PlugInstall +qall; cd ~/.vim/plugged/vimproc.vim && make"
 
-echo "Customizing your bash environment:"
-scp -P $SSH_PORT ./bashrc_worker devel@$(hostname):~/.bashrc
-
 echo "Setup git environment:"
 scp -rP 2222 ~/.git_template ~/.gitconfig devel@$(hostname):~
 
