@@ -4,7 +4,7 @@
 apt-get install -y gawk wget git git-core diffstat unzip texinfo gcc-multilib build-essential chrpath socat libsdl1.2-dev cpio libzip2 lsb-release python3 
  
 # add some cool base tools
-apt-get install -y vim-gtk man tree tar
+apt-get install -y vim-gtk man tree
 
 # for gerrit 
 apt-get install -y git-review gitg
