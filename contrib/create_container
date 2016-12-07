@@ -76,6 +76,7 @@ scp -P $SSH_PORT INSTALL/config/bashrc devel@$(hostname):~/.bashrc
 
 echo "Activate vim environment:"
 ssh -p $SSH_PORT devel@$(hostname) "git clone https://github.com/claneys/vimrc.git .vim; ln -s .vim/vimrc .vimrc; vim +PlugInstall +qall; cd ~/.vim/plugged/vimproc.vim && make"
+scp -P $SSH_PORT INSTALL/config/wakatime.cfg devel@$(hostname):~/.wakatime.cfg
 
 echo "Setup git environment:"
 scp -rP 2222 ~/.git_template ~/.gitconfig devel@$(hostname):~
