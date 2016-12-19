@@ -75,7 +75,7 @@ make_image() {
   sudo mkdir $tmpd
   sudo mount $loop $tmpd
   echo "Extracting image tarball..."
-  sudo tar-1.28 pjxf $imgtar -C $tmpd --xattrs-include='*' 
+  sudo tar pjxf $imgtar -C $tmpd --xattrs-include='*' 
   sudo cp $ydir/uImage+dtb $tmpd/boot
   sudo umount $loop
   sudo losetup -d $loop
