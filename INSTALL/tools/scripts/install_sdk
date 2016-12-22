@@ -25,7 +25,7 @@ ln -sf $XDT_SDK $DEFAULT_INSTALL_DIR 2>/dev/null || sudo ln -sf $XDT_SDK $DEFAUL
 rm -rfv $XDT_SDK/sysroots/cortex*/usr/local
 
 # cleanup
-pushd $XDT_SDK/sysroots/*-poky-*
+pushd $XDT_SDK/sysroots/*-agl-*
 
 	find . -type d -name "*.debug" | while read dir; do
 		echo "Removing debug dir: $dir"
