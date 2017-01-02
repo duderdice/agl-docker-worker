@@ -1,5 +1,21 @@
 #!/bin/bash
 
+##########################################
+# WARNING WARNING WARNING WARNING 
+#
+# This script is an example to start a new AGL container
+#
+# You should customize it to fit your environment and in particular 
+# adjust the paths and permissions where needed.
+# 
+# Note that sharing volumes with host system is not mandatory: it
+# was just added for performances reasons: building from a SSD is
+# just faster than using the container filesystem: that's why /xdt is 
+# mounted from there. Same applies to ~/mirror and ~/share, which are 
+# just 2 convenient folders to store reference build caches (used in prepare_meta script)
+#
+##########################################
+
 CURDIR=$(cd $(dirname $0) && pwd -P)
 DEFIMAGE=$(make -s -C $CURDIR show-image)
 
