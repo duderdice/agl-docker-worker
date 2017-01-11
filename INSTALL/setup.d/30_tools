@@ -1,6 +1,6 @@
 #!/bin/bash
 
-apt-get install -y python-lzma python-gpgme pbzip2 pigz lzop
+apt-get install -y python-lzma python-gpgme pbzip2 pigz lzop gitk git-gui
 
 dpkg -i	\
 	$INSTDIR/tools/bmaptools/bmap-tools*.deb \
