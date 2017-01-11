@@ -1,192 +1,95 @@
-# Sample .bashrc for SuSE Linux
-# Copyright (c) SuSE GmbH Nuernberg
+# .bashrc
 
-# There are 3 different types of shells in bash: the login shell, normal shell
-# and interactive shell. Login shells read ~/.profile and interactive shells
-# read ~/.bashrc; in our setup, /etc/profile sources ~/.bashrc - thus all
-# settings made here will also take effect in a login shell.
-#
-# NOTE: It is recommended to make language settings in ~/.profile rather than
-# here, since multilingual X sessions would not work properly if LANG is over-
-# ridden in every subshell.
+# User specific aliases and functions
+alias lsd='ls -lh'
+alias lsz='ls -lZ'
+alias gitlog='git log --oneline --graph --decorate'
 
-# Some applications read the EDITOR variable to determine your favourite text
-# editor. So uncomment the line below and enter the editor of your choice :-)
-#export EDITOR=/usr/bin/vim
-#export EDITOR=/usr/bin/mcedit
+# Handle bash history
+export HISTFILESIZE=1000000000
+export HISTSIZE=1000000000
+export HISTFILE=~/.bash_history
+export HISTTIMEFORMAT="%d/%m/%y %T "
 
-# For some news readers it makes sense to specify the NEWSSERVER variable here
-#export NEWSSERVER=your.news.server
-
-# If you want to use a Palm device with Linux, uncomment the two lines below.
-# For some (older) Palm Pilots, you might need to set a lower baud rate
-# e.g. 57600 or 38400; lowest is 9600 (very slow!)
-#
-#export PILOTPORT=/dev/pilot
-#export PILOTRATE=115200
-
-test -s ~/.alias && . ~/.alias || true
-
-if [ "$PS1" ]; then
-	function set_bash_prompt {
-		# save rc
-		local RC=$?
-
-		function color {
-			echo -n "\["
-			for k in $*; do
-				case $k in
-					bold) tput bold 2>/dev/null;;
-					none) tput sgr0 2>/dev/null;;
-					*) tput setaf $k 2>/dev/null;;
-				esac
-			done
-			echo -n "\]"
-		}
-
-		local DARK_RED=$(color 1)
-		local DARK_GREEN=$(color 2)
-		local BROWN=$(color 3)
-		local DARK_BLUE=$(color 4)
-		local GRAY=$(color 7)
-
-		local RED=$(color bold 1)
-		local GREEN=$(color bold 2)
-		local YELLOW=$(color bold 3)
-		local BLUE=$(color bold 4)
-		local MAGENTA=$(color bold 5)
-		local WHITE=$(color bold 7)
-
-		local COLOR_NONE=$(color none)
-
-		function is_git_repository {
-			git branch >/dev/null 2>&1
-		}
-
-		function set_git_branch {
-			# Capture the output of the "git status" command.
-			git_status="$(git status 2> /dev/null)"
-			 
-			# Set color based on clean/staged/dirty.
-			status_pattern="working (tree|directory) clean"
-			if [[ ${git_status} =~ ${status_pattern} ]]; then
-				state="${GREEN}"
-			elif [[ ${git_status} =~ "Changes to be committed" ]]; then
-				state="${YELLOW}"
-			else
-				state="${RED}"
-			fi
-
-			# Set arrow icon based on status against remote.
-			remote_pattern="Your branch is (ahead|behind)"
-			if [[ ${git_status} =~ ${remote_pattern} ]]; then
-				if [[ ${BASH_REMATCH[1]} == "ahead" ]]; then
-					remote="${YELLOW}↑"
-				elif [[ ${BASH_REMATCH[1]} == "behind" ]]; then
-					remote="${YELLOW}↓"
-				fi
-			else
-				remote=""
-			fi
-			diverge_pattern="Your branch and (.*) have diverged"
-			if [[ ${git_status} =~ ${diverge_pattern} ]]; then
-				remote="${RED}↕"
-			fi
-
-			# Get the name of the branch.
-			branch=$(a=$(git rev-parse --abbrev-ref HEAD 2>/dev/null); [[ $? == 0 ]] && echo $a || echo "<nowhere>")
-			 
-			# Set the final branch string.
-			BRANCH="${state}(${branch})${remote}${COLOR_NONE}"
-		}
-
-		function set_prompt_symbol () {
-			mark="\$"
-			if [[ "`id -u`" -eq 0 ]]; then
-				mark="#"
-			fi
-
-			if [[ $1 -eq 0 ]]; then
-				PROMPT_SYMBOL=$mark
-			elif [[ $1 -eq 127 ]]; then
-				PROMPT_SYMBOL="${MAGENTA}${mark}${COLOR_NONE}"
-			else
-				PROMPT_SYMBOL="${RED}${mark}${COLOR_NONE}"
-			fi
-		}
-
-		# Set the PROMPT_SYMBOL variable. We do this first so we don't lose the
-		# return value of the last command.
-		set_prompt_symbol $RC
-		 
-		local usercol=$BLUE
-		local hostcol=$GREEN
-		local dircol=$YELLOW
-		if [ "`id -u`" -eq 0 ]; then
-			usercol=$RED 
-			hostcol=$RED
-			dircol=$RED
-		fi
-
-		# Set the BRANCH variable.
-		if is_git_repository ; then
-			set_git_branch
-		else
-			BRANCH=''
-		fi
-
-		# Set the bash prompt variable.
-		PS1="\[\$(ppwd \l)\][$(date +%H:%M:%S)] ${usercol}\u${COLOR_NONE}@${hostcol}\h${COLOR_NONE}:${dircol}\w${COLOR_NONE}${BRANCH}${PROMPT_SYMBOL} "
-	}
-
-	if [[ "$(type -t ppwd)" != "function" ]]; then
-		if [[ "$TERM" =~ xterm ]]; then
-			_tsl=$(echo -en '\e]2;')
-			_isl=$(echo -en '\e]1;')
-			_fsl=$(echo -en '\007')
-			_sc=$(tput sc 2>/dev/null)
-			_rc=$(tput rc 2>/dev/null)
-			TS1="$_sc$_tsl%s@%s:%s$_fsl$_isl%s$_fsl$_rc"
-			unset _tsl _isl _fsl _sc _rc
-			function ppwd () {
-				local dir
-				local -i width
-				test -n "$TS1" || return;
-				dir="$(dirs +0)"
-				let width=${#dir}-18
-				test ${#dir} -le 18 || dir="...${dir#$(printf "%.*s" $width "$dir")}"
-				local host
-				host=$(uname -n)
-				host=${host//.*/}
-				printf "$TS1" "$USER" "$host" "$dir" "$host"
-			}
-		else
-			function ppwd () { true; }
-		fi
-	fi
-
-	PROMPT_COMMAND=set_bash_prompt
-
-	function rcd () {
-      [ "${1:0:1}" == "/" ] && { cd $1; } || { cd $(pwd -P)/$1; }
-   }
-
-	alias ll="ls -l"
-	alias lr="ls -ltr"
-	alias la="ls -al"
-	alias egrep='egrep --color=auto'
-	alias fgrep='fgrep --color=auto'
-	alias grep='grep --color=auto'
-
+# Source global definitions
+if [ -f /etc/bashrc ]; then
+        . /etc/bashrc
 fi
 
-# force locale
-#export LANG=en_US.UTF-8
-#export LANGUAGE=$LANG
-#export LC_ALL=$LANG
-#export LC_PAPER=$LANG
-#export LC_MONETARY=$LANG
-#export LC_NUMERIC=$LANG
-#export LC_MEASUREMENT=$LANG
-#export LC_TIME=$LANG
+__git_ps1 ()
+{
+    local b="$(git symbolic-ref HEAD 2>/dev/null)";
+    if [ -n "$b" ]; then
+        printf "(%s)" "${b##refs/heads/}";
+    fi
+}
 
+hostnam=$(hostname -s)
+usernam=$(whoami)
+temp="$(tty)"
+#   Chop off the first five chars of tty (ie /dev/):
+cur_tty="${temp:5}"
+unset temp
+
+function prompt_command {
+local EXIT=$?
+
+#   Find the width of the prompt:
+TERMWIDTH=${COLUMNS}
+[ $(( $TERMWIDTH % 2)) -ne 0 ] && let TERMWIDTH=$TERMWIDTH-1
+
+#   Add all the accessories below ...
+local temp="--(${usernam}@${hostnam}})-(${PWD})--"
+local datesize=18
+
+let fillsize=${TERMWIDTH}-${#temp}-$datesize
+let sidesize=$fillsize/2
+let rightbegin=$sidesize+$datesize
+if [ "$fillsize" -gt "0" ]
+then
+        fill="-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------"
+        leftfill="${fill:0:${sidesize}}"
+        rightfill="${fill:${rightbegin}:${sidesize}}"
+        newPWD="${PWD}"
+fi
+
+if [ "$fillsize" -lt "0" ]
+then
+        fill=""
+        let cut=3-${fillsize}
+        newPWD="...${PWD:${cut}}"
+fi
+
+local WHITE="\[\033[1;37m\]"
+local NO_COLOUR="\[\033[0m\]"
+
+local LIGHT_BLUE="\[\033[1;34m\]"
+local GREEN="\[\033[1;32m\]"
+local MAGENTA="\[\033[1;35m\]"
+local YELLOW="\[\033[1;33m\]"
+local RED="\[\033[1;31m\]"
+
+if [ "$usernam" = "root" ]
+then
+    PROMPT_COLOR=$GREEN
+    PROMPT_CAR="#"
+else
+    PROMPT_COLOR=$YELLOW
+    PROMPT_CAR="$"
+fi
+
+PS1="$PROMPT_COLOR.-\
+$GREEN($MAGENTA\w$GREEN)$PROMPT_COLOR--\
+${PROMPT_COLOR}--\${leftfill}\
+$MAGENTA\$(date \"+%a,%d %b %y\")$GREEN,$MAGENTA\$(date +%R)\
+${PROMPT_COLOR}${rightfill}-\
+${GREEN}($MAGENTA\u$GREEN@$MAGENTA\h$GREEN)$PROMPT_COLOR\
+\n\
+$PROMPT_COLOR\\\`-$GREEN(\
+${MAGENTA}${EXIT}${GREEN})${PROMPT_COLOR}-$(__git_ps1)-${PROMPT_CAR}\
+$NO_COLOUR "
+
+PS2="$GREEN-$PROMPT_COLOR--$NO_COLOUR "
+}
+
+export PROMPT_COMMAND=prompt_command
