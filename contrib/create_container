@@ -17,7 +17,7 @@
 ##########################################
 
 CURDIR=$(cd $(dirname $0) && pwd -P)
-DEFIMAGE=$(make -s -C $CURDIR show-image)
+DEFIMAGE=$(make -s -C $CURDIR/.. show-image)
 
 function usage() {
 	echo "Usage: $(basename $0) <instance ID> [image name]"  >&2
@@ -32,8 +32,6 @@ case $1 in
 		usage
 		;;
 esac
-
-CURDIR=$(cd $(dirname $0) && pwd -P)
 
 ID=$1
 IMAGE=${2:-$DEFIMAGE}
